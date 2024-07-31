@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import AnalogGauge from "../components/AnalogGauge";
 import DigitalGauge from "../components/DigitalGauge";
 
 const Index = () => {
   const [isConnected, setIsConnected] = useState(false);
+  const [isAnalog, setIsAnalog] = useState(true);
   const [telemetryData, setTelemetryData] = useState({
     speed: 0,
     rpm: 0,
@@ -23,6 +26,10 @@ const Index = () => {
 
   const toggleConnection = () => {
     setIsConnected(!isConnected);
+  };
+
+  const toggleGaugeType = () => {
+    setIsAnalog(!isAnalog);
   };
 
   useEffect(() => {
@@ -50,32 +57,46 @@ const Index = () => {
     }
   }, [isConnected]);
 
+  const renderGauge = (value, min, max, title, unit) => {
+    if (isAnalog) {
+      return <AnalogGauge value={value} min={min} max={max} title={title} unit={unit} />;
+    } else {
+      return <DigitalGauge value={value} title={title} unit={unit} />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="p-4 bg-card border-b">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">Telemetry Dashboard</h1>
-          <Button onClick={toggleConnection}>
-            {isConnected ? "Disconnect" : "Connect"}
-          </Button>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Switch id="gauge-type" checked={isAnalog} onCheckedChange={toggleGaugeType} />
+              <Label htmlFor="gauge-type">{isAnalog ? "Analog" : "Digital"}</Label>
+            </div>
+            <Button onClick={toggleConnection}>
+              {isConnected ? "Disconnect" : "Connect"}
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <AnalogGauge value={telemetryData.speed} min={0} max={200} title="Speed" unit="km/h" />
-          <AnalogGauge value={telemetryData.rpm} min={0} max={8000} title="RPM" unit="rpm" />
+          {renderGauge(telemetryData.speed, 0, 200, "Speed", "km/h")}
+          {renderGauge(telemetryData.rpm, 0, 8000, "RPM", "rpm")}
           <DigitalGauge value={telemetryData.gear} title="Gear" unit="" />
-          <DigitalGauge value={telemetryData.braking} title="Braking" unit="%" />
-          <DigitalGauge value={telemetryData.accelerationX} title="Acceleration X" unit="m/s²" />
-          <DigitalGauge value={telemetryData.accelerationY} title="Acceleration Y" unit="m/s²" />
-          <DigitalGauge value={telemetryData.accelerationZ} title="Acceleration Z" unit="m/s²" />
-          <DigitalGauge value={telemetryData.steeringAngle} title="Steering Angle" unit="°" />
-          <DigitalGauge value={telemetryData.throttlePosition} title="Throttle Position" unit="%" />
-          <DigitalGauge value={telemetryData.brakePosition} title="Brake Position" unit="%" />
-          <DigitalGauge value={telemetryData.suspensionTravel} title="Suspension Travel" unit="mm" />
-          <DigitalGauge value={telemetryData.tireTemperature} title="Tire Temperature" unit="°C" />
-          <DigitalGauge value={telemetryData.tireWear} title="Tire Wear" unit="%" />
+          {renderGauge(telemetryData.braking, 0, 100, "Braking", "%")}
+          {renderGauge(telemetryData.accelerationX, -2, 2, "Acceleration X", "m/s²")}
+          {renderGauge(telemetryData.accelerationY, -2, 2, "Acceleration Y", "m/s²")}
+          {renderGauge(telemetryData.accelerationZ, -2, 2, "Acceleration Z", "m/s²")}
+          {renderGauge(telemetryData.steeringAngle, -180, 180, "Steering Angle", "°")}
+          {renderGauge(telemetryData.throttlePosition, 0, 100, "Throttle Position", "%")}
+          {renderGauge(telemetryData.brakePosition, 0, 100, "Brake Position", "%")}
+          {renderGauge(telemetryData.suspensionTravel, 0, 200, "Suspension Travel", "mm")}
+          {renderGauge(telemetryData.tireTemperature, 0, 100, "Tire Temperature", "°C")}
+          {renderGauge(telemetryData.tireWear, 0, 100, "Tire Wear", "%")}
         </div>
       </main>
 
