@@ -4,10 +4,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import AnalogGauge from "../components/AnalogGauge";
 import DigitalGauge from "../components/DigitalGauge";
+import SettingsMenu from "../components/SettingsMenu";
+import { useSettings } from '../contexts/SettingsContext';
 
 const Index = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isAnalog, setIsAnalog] = useState(true);
+  const { settings } = useSettings();
   const [telemetryData, setTelemetryData] = useState({
     speed: 0,
     rpm: 0,
@@ -51,17 +54,36 @@ const Index = () => {
           tireTemperature: Math.floor(Math.random() * 100 + 20),
           tireWear: Math.floor(Math.random() * 100),
         });
-      }, 1000);
+      }, 1000 / settings.refreshRate);
 
       return () => clearInterval(interval);
     }
-  }, [isConnected]);
+  }, [isConnected, settings.refreshRate]);
+
+  const convertSpeed = (speed) => {
+    return settings.speedUnit === 'mph' ? Math.round(speed * 0.621371) : speed;
+  };
+
+  const convertTemperature = (temp) => {
+    return settings.temperatureUnit === 'F' ? Math.round((temp * 9/5) + 32) : temp;
+  };
 
   const renderGauge = (value, min, max, title, unit) => {
+    let displayValue = value;
+    let displayUnit = unit;
+
+    if (title === "Speed") {
+      displayValue = convertSpeed(value);
+      displayUnit = settings.speedUnit;
+    } else if (title === "Tire Temperature") {
+      displayValue = convertTemperature(value);
+      displayUnit = settings.temperatureUnit;
+    }
+
     if (isAnalog) {
-      return <AnalogGauge value={value} min={min} max={max} title={title} unit={unit} />;
+      return <AnalogGauge value={displayValue} min={min} max={max} title={title} unit={displayUnit} />;
     } else {
-      return <DigitalGauge value={value} title={title} unit={unit} />;
+      return <DigitalGauge value={displayValue} title={title} unit={displayUnit} />;
     }
   };
 
@@ -78,6 +100,7 @@ const Index = () => {
             <Button onClick={toggleConnection}>
               {isConnected ? "Disconnect" : "Connect"}
             </Button>
+            <SettingsMenu />
           </div>
         </div>
       </header>
@@ -102,7 +125,7 @@ const Index = () => {
 
       <footer className="p-4 bg-card border-t mt-8">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          Data Logging Status: {isConnected ? "Active" : "Inactive"} | Refresh Rate: 1Hz
+          Data Logging Status: {isConnected ? "Active" : "Inactive"} | Refresh Rate: {settings.refreshRate}Hz
         </div>
       </footer>
     </div>
